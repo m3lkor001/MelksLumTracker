@@ -25,6 +25,7 @@ if you are having issues, turn on debugging and pm me on discord with your issue
 <br />
 <br />
 **Upcoming** <br />
+Enable/Disable VTank Buffing based on duration left<br />
 Windows open and placement saved per character. <br />
 <br />
 **Change log:**<br />
