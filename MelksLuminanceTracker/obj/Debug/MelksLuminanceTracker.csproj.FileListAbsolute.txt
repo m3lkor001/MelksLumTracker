@@ -1,10 +1,5 @@
 /home/m3lkor/Games/AC/drive_c/Games/Decal Plugins/MelksLuminanceTracker/obj/Debug/MelksLuminanceTracker.csproj.AssemblyReference.cache
 /home/m3lkor/Games/AC/drive_c/Games/Decal Plugins/MelksLuminanceTracker/obj/Debug/MelksLuminanceTracker.csproj.CoreCompileInputs.cache
-/home/m3lkor/Games/AC/drive_c/Games/Decal Plugins/MelksLuminanceTracker/bin/Debug/VirindiViewService.dll
-/home/m3lkor/Games/AC/drive_c/Games/Decal Plugins/MelksLuminanceTracker/bin/Debug/WebControlWrapper.dll
-/home/m3lkor/Games/AC/drive_c/Games/Decal Plugins/MelksLuminanceTracker/bin/Debug/System.Data.SQLite.dll
-/home/m3lkor/Games/AC/drive_c/Games/Decal Plugins/MelksLuminanceTracker/bin/Debug/VirindiViewService.xml
-/home/m3lkor/Games/AC/drive_c/Games/Decal Plugins/MelksLuminanceTracker/obj/Debug/MelksLuminanceTracker.csproj.CopyComplete
 /home/m3lkor/Games/AC/drive_c/Games/Decal Plugins/MelksLuminanceTracker/bin/Debug/MelksLuminanceTracker.dll
 /home/m3lkor/Games/AC/drive_c/Games/Decal Plugins/MelksLuminanceTracker/bin/Debug/MelksLuminanceTracker.pdb
 /home/m3lkor/Games/AC/drive_c/Games/Decal Plugins/MelksLuminanceTracker/obj/Debug/MelksLuminanceTracker.dll

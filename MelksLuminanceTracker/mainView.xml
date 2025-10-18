@@ -12,7 +12,8 @@
                 <control progid="DecalControls.StaticText" name="lumRateCoinLabel" left="5" top="100" width="180" height="20" text="Coins-Lum/hr: 0"/>
 	            <control progid="DecalControls.StaticText" name="effectiveCRateLabel" left="5" top="120" width="190" height="20" text="Effective C/hr: 0"/>
                 <control progid="DecalControls.StaticText" name="effectiveLRateLabel" left="5" top="140" width="190" height="20" text="Effective L/hr: 0"/>
-	            <control progid="DecalControls.StaticText" name="timeLabel" left="5" top="160" width="150" height="20" text="Run Time: 00:00"/>
+	            <control progid="DecalControls.StaticText" name="timeLabel" left="0" top="160" width="110" height="20" text="Run Time: 00:00"/>
+	            <control progid="DecalControls.StaticText" name="ctimeLabel" left="115" top="160" width="75" height="20" text="Time: 00:00"/>
                 <control progid="DecalControls.PushButton" name="bankButton" left="5" top="180" width="30" height="20" text="/b"/>  
                 <control progid="DecalControls.PushButton" name="qbankButton" left="45" top="180" width="30" height="20" text="q/b"/>  
                 <control progid="DecalControls.PushButton" name="clapButton" left="105" top="180" width="90" height="20" text="/Clap All"/>
@@ -42,7 +43,7 @@
                 <control progid="DecalControls.StaticText" name="xpTimetoLvlLabel" left="5" top="105" width="180" height="20" text="Time to Lvl: 00:00"/>
             </control>
         </page>
-        <page label="Rpt-Tx">
+        <page label="Rpt">
             <control progid="DecalControls.FixedLayout" clipped="">
                 <control progid="DecalControls.StaticText" name="reportlbl" left="85" top="5" width="50" height="20" text="REPORTS"/>
                 <control progid="DecalControls.PushButton" name="reportLumBtn" left="5" top="25" width="40" height="20" text="Lum"/>
@@ -51,14 +52,21 @@
                 <control progid="DecalControls.PushButton" name="reportCoinEBtn" left="55" top="50" width="40" height="20" text="Coin E"/>
                 <control progid="DecalControls.PushButton" name="reportKillBtn" left="5" top="75" width="40" height="20" text="Kills"/>
                 <control progid="DecalControls.PushButton" name="reportXPBtn" left="55" top="75" width="40" height="20" text="XP"/>
-                <control progid="DecalControls.StaticText" name="txfrtlbl" left="80" top="100" width="70" height="20" text="TRANSFERS"/>
-                <control progid="DecalControls.StaticText" name="txfrt2lbl" left="5" top="125" width="50" height="20" text="Tx TO:"/>
-                <control progid="DecalControls.Edit" name="txToInput" left="65" top="125" width="125" height="20" text=""/>
-                <control progid="DecalControls.PushButton" name="txCoinsBtn" left="25" top="150" width="60" height="20" text="Tx Coins"/>
-                <control progid="DecalControls.PushButton" name="txLumBtn" left="95" top="150" width="60" height="20" text="Tx Lum"/>
-                <control progid="DecalControls.PushButton" name="AutoTxCoinsBtn" left="0" top="175" width="160" height="20" text="Auto Tx: Disabled"/>
-                <control progid="DecalControls.StaticText" name="txfrt3lbl" left="5" top="205" width="90" height="20" text="Auto Txfr Coins:"/>
-                <control progid="DecalControls.Edit" name="autoTxInput" left="95" top="205" width="30" height="20" text="50"/>
+            </control>
+        </page>
+        <page label="Tx">
+            <control progid="DecalControls.FixedLayout" clipped="">
+                <control progid="DecalControls.StaticText" name="txfrtlbl" left="80" top="5" width="70" height="20" text="TRANSFERS"/>
+                <control progid="DecalControls.StaticText" name="txfrt2lbl" left="5" top="30" width="50" height="20" text="Tx TO:"/>
+                <control progid="DecalControls.Edit" name="txToInput" left="65" top="30" width="125" height="20" text=""/>
+                <control progid="DecalControls.PushButton" name="txCoinsBtn" left="25" top="55" width="60" height="20" text="Tx Coins"/>
+                <control progid="DecalControls.PushButton" name="txLumBtn" left="95" top="55" width="60" height="20" text="Tx Lum"/>
+                <control progid="DecalControls.Checkbox" name="AutoTxCoinsBtn" left="0" top="80" width="160" height="20" text="Auto Tx Coins"  checked="false" />
+                <control progid="DecalControls.StaticText" name="txfrt3lbl" left="5" top="105" width="90" height="20" text="Auto Txfr Coins:"/>
+                <control progid="DecalControls.Edit" name="autoTxInput" left="95" top="105" width="80" height="20" text="50"/>
+                <control progid="DecalControls.Checkbox" name="AutoTxLumBtn" left="0" top="130" width="160" height="20" text="Auto Tx Lum"  checked="false" />
+                <control progid="DecalControls.StaticText" name="txfrt4lbl" left="5" top="155" width="90" height="20" text="Auto Txfr Lum:"/>
+                <control progid="DecalControls.Edit" name="autoTxLumInput" left="5" top="180" width="200" height="20" text="1000000000"/>
             </control>
         </page>
         <page label="Cfg">
@@ -67,10 +75,11 @@
                 <control progid="DecalControls.Edit" name="convRateInput" left="0" top="25" width="50" height="20" text="66.2"/>
                 <control progid="DecalControls.Edit" name="convRateLInput" left="75" top="25" width="50" height="20" text="66"/>
                 <control progid="DecalControls.PushButton" name="applyConversionButton" left="140" top="25" width="40" height="20" text="Conv"/>
-                <control progid="DecalControls.PushButton" name="autoResetBtn" left="5" top="50" width="140" height="20" text="Auto-Reset Txfr: Off"/>
-                <control progid="DecalControls.PushButton" name="coinBankBtn" left="5" top="75" width="150" height="20" text="Coin by Bank: Off" checked="false" />
+                <control progid="DecalControls.Checkbox" name="autoResetBtn" left="5" top="50" width="140" height="20" text="Auto-Reset Txfr"  checked="false" />
+                <control progid="DecalControls.Checkbox" name="coinBankBtn" left="5" top="75" width="150" height="20" text="Coin by Bank" checked="false" />
                 <control progid="DecalControls.PushButton" name="resetBtn" left="5" top="100" width="140" height="20" text="Reset Counters"/>
-                <control progid="DecalControls.PushButton" name="calcEnableBtn" left="5" top="125" width="150" height="20" text="Enabled" checked="true" />
+                <control progid="DecalControls.Checkbox" name="calcEnableBtn" left="5" top="125" width="75" height="20" text="Enabled" checked="true" />
+                <control progid="DecalControls.Checkbox" name="BuffEnableChk" left="90" top="125" width="75" height="20" text="Buffs" checked="true" />
                 <control progid="DecalControls.StaticText" name="pollratelbl" left="5" top="150" width="60" height="20" text="Poll Rate:"/>
                 <control progid="DecalControls.Edit" name="pollRateInput" left="70" top="150" width="50" height="20" text="1"/>
                 <control progid="DecalControls.PushButton" name="UpdatePoll" left="130" top="150" width="70" height="20" text="Update Poll"/>

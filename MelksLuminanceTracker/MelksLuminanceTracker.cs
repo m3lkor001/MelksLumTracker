@@ -103,6 +103,7 @@ namespace MelksLuminanceTracker
         private int coinclapavail = 0;
         private int pollRate = 1;
         private int autotxcoincnt = 50;
+        private double autotxlumcnt = 8000000000;
         private int CoinMode = 0;  //0=red, 1=egg, 2=shells, 3=coins, 4=snowmen, 5=Jam, 6=Skulls
         private int curFaltTrinket = 0;
         private double curMMD = 0;
@@ -122,6 +123,7 @@ namespace MelksLuminanceTracker
 		private bool autoResetEnabled = false;
         private bool coinusebank = false;
         private bool progenable = true;
+        private bool buffenable = false;
         private bool eatbank = false;
         private bool eatxp = false;
         private bool bankdata = false;
@@ -129,6 +131,7 @@ namespace MelksLuminanceTracker
         private bool enbDebug = false;
         private bool savefilefnd = false;
         private bool autotxcoin = false;
+        private bool autotxlum = false;
         private bool popupvis = false;
         private bool popupvis2 = false;
         private bool popupinit = false;
@@ -163,17 +166,21 @@ namespace MelksLuminanceTracker
 		[MVControlReference("effectiveCRateLabel")] private IStaticText effectiveCRateLabel = null;
         [MVControlReference("effectiveLRateLabel")] private IStaticText effectiveLRateLabel = null;
 		[MVControlReference("timeLabel")] private IStaticText timeLabel = null;
+		[MVControlReference("ctimeLabel")] private IStaticText ctimeLabel = null;
 		[MVControlReference("convRateInput")] private ITextBox convRateInput = null;
         [MVControlReference("convRateLInput")] private ITextBox convRateLInput = null;
         [MVControlReference("pollRateInput")] private ITextBox pollRateInput = null;
         [MVControlReference("txToInput")] private ITextBox txToInput = null;
         [MVControlReference("autoTxInput")] private ITextBox autoTxInput = null;
+        [MVControlReference("AutoTxLumBtn")] private ICheckBox AutoTxLumBtn = null;
+        [MVControlReference("BuffEnableChk")] private ICheckBox BuffEnableChk = null;
+        [MVControlReference("autoTxLumInput")] private ITextBox autoTxLumInput = null;
         [MVControlReference("coinRateLumLabel")] private IStaticText coinRateLumLabel = null;
         [MVControlReference("atcCurLbl")] private IStaticText atcCurLbl = null;
-        [MVControlReference("coinBankBtn")] private IButton coinBankBtn = null;
-        [MVControlReference("autoResetBtn")] private IButton autoResetBtn = null;
-        [MVControlReference("calcEnableBtn")] private IButton calcEnableBtn = null;
-        [MVControlReference("AutoTxCoinsBtn")] private IButton AutoTxCoinsBtn = null;
+        [MVControlReference("coinBankBtn")] private ICheckBox coinBankBtn = null;
+        [MVControlReference("autoResetBtn")] private ICheckBox autoResetBtn = null;
+        [MVControlReference("calcEnableBtn")] private ICheckBox calcEnableBtn = null;
+        [MVControlReference("AutoTxCoinsBtn")] private ICheckBox AutoTxCoinsBtn = null;
         [MVControlReference("luminKillLabel")] private IStaticText luminKillLabel = null;
         [MVControlReference("luminOtherlLabel")] private IStaticText luminOtherlLabel = null;
         [MVControlReference("KillLabel")] private IStaticText KillLabel = null;
@@ -298,29 +305,29 @@ namespace MelksLuminanceTracker
                 Util.WriteToChat($"Loading Settings: {characterKey}");
                 if (charNode == null) {Util.WriteToChat("Loading Settings: No Char Node Found");return;}
                 savefilefnd = true;
-
                 // Load auto-reset
                 XmlNode node = charNode.SelectSingleNode("AutoResetEnabled");
                 if (node != null) 
                 {
                     autoResetEnabled = bool.Parse(node.InnerText);
-                    autoResetBtn.Text = $"Auto-Reset Txfr: {(autoResetEnabled ? "On" : "Off")}";
+                    autoResetBtn.Checked = autoResetEnabled;
+                    //autoResetBtn.Text = $"Auto-Reset Txfr: {(autoResetEnabled ? "On" : "Off")}";
                 }
-
                 // Load Coin by Bank
                 XmlNode node5 = charNode.SelectSingleNode("coinusebank");
-                if (node != null) 
+                if (node5 != null) 
                 {
                     coinusebank = bool.Parse(node5.InnerText);
-                    coinBankBtn.Text = $"Coin by Bank: {(coinusebank ? "On" : "Off")}";
+                    coinBankBtn.Checked = coinusebank;
+                    //coinBankBtn.Text = $"Coin by Bank: {(coinusebank ? "On" : "Off")}";
                 }
-
                 // Load Program Enable
                 XmlNode node6 = charNode.SelectSingleNode("progenable");
-                if (node != null) 
+                if (node6 != null) 
                 {
                     progenable = bool.Parse(node6.InnerText);
-                    calcEnableBtn.Text = $"{(progenable ? "Enabled" : "Disabled")}";
+                    calcEnableBtn.Checked = progenable;
+                    //calcEnableBtn.Text = $"{(progenable ? "Enabled" : "Disabled")}";
                 }
 
                 // Load conversion rate
@@ -336,7 +343,6 @@ namespace MelksLuminanceTracker
                     conversionCRate = rate2;
                     convRateLInput.Text = rate2.ToString();
                 }
-
                 // Load Poll Rate
                 XmlNode node4 = charNode.SelectSingleNode("pollRate");
                 if (node4 != null && int.TryParse(node4.InnerText, out int rate3))
@@ -344,7 +350,6 @@ namespace MelksLuminanceTracker
                     pollRate = rate3;
                     pollRateInput.Text = rate3.ToString();
                 }
-
                 // Load Poll Rate
                 XmlNode node7 = charNode.SelectSingleNode("txToName");
                 if (node7 != null)
@@ -352,14 +357,43 @@ namespace MelksLuminanceTracker
                     txToInput.Text = node7.InnerText;
                     txToName = node7.InnerText;
                 }
-
                 // Auto transfer coins
                 XmlNode node8 = charNode.SelectSingleNode("autoTxInput");
                 if (node8 != null && int.TryParse(node8.InnerText, out int rate4))
                 {
                     autoTxInput.Text = node8.InnerText;
                     autotxcoincnt = rate4;
-                }            
+                }
+                // Auto transfer Lum
+                XmlNode node9 = charNode.SelectSingleNode("autoTxLumInput");
+                if (node9 != null && double.TryParse(node9.InnerText, out double rate5))
+                {
+                    autoTxLumInput.Text = node9.InnerText;
+                    autotxlumcnt = rate5;
+                }
+                // Auto transfer coin enable
+                XmlNode node10 = charNode.SelectSingleNode("autotxcoin");
+                if (node10 != null) 
+                {
+                    autotxcoin = bool.Parse(node10.InnerText);
+                    AutoTxCoinsBtn.Checked = autotxcoin;
+                    //calcEnableBtn.Text = $"{(progenable ? "Enabled" : "Disabled")}";
+                }
+                // Auto transfer lum enable
+                XmlNode node11 = charNode.SelectSingleNode("autotxlum");
+                if (node11 != null) 
+                {
+                    autotxlum = bool.Parse(node11.InnerText);
+                    AutoTxLumBtn.Checked = autotxlum;
+                    //calcEnableBtn.Text = $"{(progenable ? "Enabled" : "Disabled")}";
+                }
+                // BuffEnableChk
+                XmlNode node12 = charNode.SelectSingleNode("buffenable");
+                if (node11 != null) 
+                {
+                    buffenable = bool.Parse(node12.InnerText);
+                    BuffEnableChk.Checked = buffenable;
+                }
             }
             catch (Exception ex) {Util.WriteToChat($"LoadSettings Settings Error: {ex}");}
         }
@@ -395,7 +429,7 @@ namespace MelksLuminanceTracker
                 autoResetElem.InnerText = autoResetEnabled.ToString();
                 ReplaceOrAppend(charNode, autoResetElem);
 
-                // Coin by Bankprogenable
+                // Coin by Bank
                 XmlElement coinusebankElem = doc.CreateElement("coinusebank");
                 coinusebankElem.InnerText = coinusebank.ToString();
                 ReplaceOrAppend(charNode, coinusebankElem);
@@ -427,11 +461,31 @@ namespace MelksLuminanceTracker
                 txToNameElem.InnerText = txToInput.Text;
                 ReplaceOrAppend(charNode, txToNameElem);
 
-                // Auto transfer Coins count
+                // Auto transfer Coins Count
                 XmlElement autoTxInputElem = doc.CreateElement("autoTxInput");
                 autoTxInputElem.InnerText = autoTxInput.Text;
                 ReplaceOrAppend(charNode, autoTxInputElem);
-    
+
+                // Auto transfer Lum count
+                XmlElement autoTxLumInputElem = doc.CreateElement("autoTxLumInput");
+                autoTxLumInputElem.InnerText = autoTxLumInput.Text;
+                ReplaceOrAppend(charNode, autoTxLumInputElem);
+
+                // Auto Transfer Coins Enable 
+                XmlElement autotxcoinElem = doc.CreateElement("autotxcoin");
+                autotxcoinElem.InnerText = autotxcoin.ToString();
+                ReplaceOrAppend(charNode, autotxcoinElem);
+
+                // Auto Transfer Lum Enable 
+                XmlElement autotxlumElem = doc.CreateElement("autotxlum");
+                autotxlumElem.InnerText = autotxlum.ToString();
+                ReplaceOrAppend(charNode, autotxlumElem);
+
+                // Buff Enable 
+                XmlElement autobuffElem = doc.CreateElement("buffenable");
+                autobuffElem.InnerText = buffenable.ToString();
+                ReplaceOrAppend(charNode, autobuffElem);
+
                 doc.Save(configPath);
             }
             catch (Exception ex) {Util.WriteToChat($"SaveSettings Error: {ex}");}
@@ -449,8 +503,7 @@ namespace MelksLuminanceTracker
         private void UpdateUI(Object source, System.Timers.ElapsedEventArgs e)
 		{
 			try
-			{                
-                if (enbDebug){Util.WriteToChat($"UpdateUI Before progenable: {progenable}");}
+			{
                 if (!progenable){return;}
                 bankPoll(true);
                 if (enbDebug){Util.WriteToChat($"UpdateUI After progenable: {progenable}");}
@@ -487,7 +540,8 @@ namespace MelksLuminanceTracker
                 if (enbDebug){Util.WriteToChat("QuickUpdateUI Entry.");}
                 if (initialCoins == -1 || initialLuminance == -1) {return;}
                 doCalcs();
-                updateGUI();                
+                updateGUI();
+                CheckInputs();
             }
             catch (Exception ex) {Util.WriteToChat($"QuickUpdateUI Error: {ex}");}
         }
@@ -497,11 +551,13 @@ namespace MelksLuminanceTracker
             try
 			{
                 if (enbDebug){Util.WriteToChat("updateGUI Entry.");}
-                if (enbDebug){Util.WriteToChat($"pollTimer Status: {pollTimer.ToString()}");}
                 //Main Tab
                 luminCurrentLabel.Text = $"[Bank] Luminance: {tmplumcurstr}";
                 coinCurrentLabel.Text = $"[Bank] Coins: {currentCoins}";
-                timeLabel.Text = $"Run Time: {elapsed.TotalHours:n0}:{elapsed.Minutes:D2}";
+                int thours = (int)(Math.Floor(elapsed.TotalHours));
+                timeLabel.Text = $"Run Time: {thours}:{elapsed.Minutes:D2}";
+                string ctime = DateTime.Now.ToString("HH:mm");
+                ctimeLabel.Text = $"Time: {ctime}";
 				luminRateLabel.Text = $"Lum/hr: {tmplumstr}";
 				coinRateLabel.Text = $"Coins/hr: {coinRate}";
                 coinRateLumLabel.Text = $"Lum-Coins/hr: {coinRateLum}";
@@ -550,6 +606,67 @@ namespace MelksLuminanceTracker
                 }
             }
             catch (Exception ex) {Util.WriteToChat($"QuickUpdateUI Error: {ex}");}
+        }
+
+        private void CheckInputs()
+        {
+            bool needsave = false;
+            if(calcEnableBtn.Checked != progenable)
+            {
+                progenable = calcEnableBtn.Checked;
+                Util.WriteToChat($"Program Enable - {progenable}");
+                needsave = true;
+            }
+            if(AutoTxCoinsBtn.Checked != autotxcoin)
+            {
+                autotxcoin = AutoTxCoinsBtn.Checked;
+                Util.WriteToChat($"Auto Transfer Coins - {autotxcoin}");
+                needsave = true;
+            }
+            if(AutoTxLumBtn.Checked != autotxlum)
+            {
+                autotxlum = AutoTxLumBtn.Checked;
+                Util.WriteToChat($"Auto Transfer Lum - {autotxlum}");
+                needsave = true;
+            }
+            if(autoResetBtn.Checked != autoResetEnabled)
+            {
+                autoResetEnabled = autoResetBtn.Checked;
+                Util.WriteToChat($"Auto Reset - {autoResetEnabled}");
+                needsave = true;
+            }
+            if(coinBankBtn.Checked != coinusebank)
+            {
+                coinusebank = coinBankBtn.Checked;
+                Util.WriteToChat($"Use Bank for Coin Count - {coinusebank}");
+                needsave = true;
+            }
+            if(txToInput.Text != txToName)
+            {
+                txToName = txToInput.Text;
+                Util.WriteToChat($"Transfer to updated to - {txToName}");
+                needsave = true;
+            }
+            /*if(((int)(autoTxInput.Text) > autotxcoin) || ((int)(autoTxInput.Text) < autotxcoin))
+            {
+                autotxcoin = autoTxInput.Text;
+                Util.WriteToChat($"Auto coin transfer amount updated to - {autotxcoin}");
+                needsave = true;
+            }
+            if(((int)(autoTxLumInput.Text) != autotxlum) || ((int)(autoTxLumInput.Text) != autotxlum))
+            {
+                autotxlum = autoTxLumInput.Text;
+                Util.WriteToChat($"Auto lum transfer amount updated to - {autotxlum}");
+                needsave = true;
+            }*/
+            if(BuffEnableChk.Checked != buffenable)
+            {
+                buffenable = BuffEnableChk.Checked;
+                Util.WriteToChat($"Enable Buffs - {buffenable}");
+                needsave = true;
+            }
+            if(needsave){SaveSettings();}
+            needsave = false;
         }
 
         private string StrValUpdate(double e)
@@ -818,8 +935,6 @@ namespace MelksLuminanceTracker
                         tmphrs = 0;
                         tmpmin = 0;
                     }
-                    if (enbDebug){Util.WriteToChat($"DoCalcs - tmp hours = {tmphrs}.");}
-                    if (enbDebug){Util.WriteToChat($"DoCalcs - tmp Minutes = {tmpmin}.");}
                     if (tmphrs > 9999999) {tmphrs = 0; tmpmin=0;}
                     else if (tmpmin > 9999999) {tmpmin=0;}
                     TimeSpan tmptimehr;
@@ -834,10 +949,26 @@ namespace MelksLuminanceTracker
                 lumdiff = currentLuminance - initialLuminance;    
                 luminRate = hours > 0 ? Math.Round(lumdiff / hours, 1) : 0;
                 // Coins per hour
-                if (coinusebank){
-                    coindiff = currentCoins - initialCoins;}
-                else {
-                    coindiff = currentcoincount;}
+                if (coinusebank)
+                {
+                    coindiff = currentCoins - initialCoins;
+                }
+                else
+                {
+                    coindiff = currentcoincount;
+                    if (CoinMode == 1) //Eggs
+                    {
+                        coindiff = curPengEgg * .1;
+                    }
+                    if (CoinMode == 3) //TL Coins
+                    {
+                        coindiff = curTimelostCoins * .37;
+                    }
+                    if (CoinMode == 5) //Jams
+                    {
+                        coindiff = curJams * .1;
+                    }
+                }
 	            coinRate = hours > 0 ? Math.Round(coindiff / hours, 1) : 0;
                 effectiveCRate = coinRate + coinRateLum;
                 // Lum per hour from Coins
@@ -879,14 +1010,24 @@ namespace MelksLuminanceTracker
                     }
                 }
                 //Coin Transfer
+                int.TryParse(autoTxInput.Text, out int autotxcoincnt);
                 if (autotxcoin)
-                {
+                {                    
                     if (currentCoins >= autotxcoincnt)
                     {
-                        int.TryParse(autoTxInput.Text, out int autotxcoincnt);
                         txStuff("Coins");
                     }
                 }
+                //Lum Transfer                
+                double.TryParse(autoTxLumInput.Text, out double autotxlumcnt);
+                if (autotxlum)
+                {
+                    if (currentLuminance >= autotxlumcnt)
+                    {
+                        txStuff("Lum");
+                    }
+                }
+                // 0 if negative
                 if (effectiveOtherRate < 0){effectiveOtherRate=0;}
                 if (luminOtherRate < 0){luminOtherRate=0;}
                 if (luminkillRate < 0){luminkillRate=0;}
@@ -919,20 +1060,6 @@ namespace MelksLuminanceTracker
 			}
 			catch (Exception ex) {Util.WriteToChat($"reset_Btn_Click Error: {ex}");}
 		}
-
-		[MVControlEvent("autoResetBtn", "Click")]
-		void autoResetBtn_Click(object sender, MVControlEventArgs e)
-        {
-			try
-			{
-                if (!isinitialized) {return;}
-        	    autoResetEnabled = !autoResetEnabled;
-                Util.WriteToChat($"autoResetEnabled = {(autoResetEnabled ? "Enabled" : "Disabled")}");
-		        autoResetBtn.Text = $"Auto-Reset Txfr: {(autoResetEnabled ? "On" : "Off")}";
-                SaveSettings();
-			}
-			catch (Exception ex) {Util.WriteToChat($"autoResetBtn_Click Error: {ex}");}
-        }
 
         [MVControlEvent("qbankButton", "Click")]
 		void qbankButton_Click(object sender, MVControlEventArgs e)
@@ -997,20 +1124,6 @@ namespace MelksLuminanceTracker
             }
 			catch (Exception ex) {Util.WriteToChat($"updatePolling Error: {ex}");}
 		}
-
-        [MVControlEvent("coinBankBtn", "Click")]
-		void coinBankBtn_Click(object sender, MVControlEventArgs e)
-		{
-			try
-			{
-                if (!isinitialized) {return;}
-				coinusebank = !coinusebank;
-                Util.WriteToChat($"Coin By Bank set to: {(coinusebank ? "Enabled" : "Disabled")}");
-                coinBankBtn.Text = $"Coin by Bank: {(coinusebank ? "On" : "Off")}";
-                SaveSettings();
-			}
-			catch (Exception ex) {Util.WriteToChat($"coinBankBtn_Click Error: {ex}");}
-		}
         
         [MVControlEvent("applyConversionButton", "Click")]
 		void applyConversionButton_Click(object sender, MVControlEventArgs e)
@@ -1025,21 +1138,6 @@ namespace MelksLuminanceTracker
 			catch (Exception ex) {Util.WriteToChat($"applyConversionButton Error: {ex}");}
 		}
 
-        [MVControlEvent("calcEnableBtn", "Click")]
-		void calcEnableBtn_Click(object sender, MVControlEventArgs e)
-		{
-			try
-			{
-                if (!isinitialized) {return;}
-				progenable = !progenable;
-                Util.WriteToChat($"Program Enable: {(progenable ? "Enabled" : "Disabled")}");
-                calcEnableBtn.Text = $"{(progenable ? "Enabled" : "Disabled")}";
-                totalReset();
-                SaveSettings();
-			}
-			catch (Exception ex) {Util.WriteToChat($"calcEnableBtn_Click Error: {ex}");}
-		}
-        
         [MVControlEvent("reportLumBtn", "Click")]
 		void reportLumBtn_Click(object sender, MVControlEventArgs e)
 		{
@@ -1130,21 +1228,6 @@ namespace MelksLuminanceTracker
 			catch (Exception ex) {Util.WriteToChat($"txLumBtn_Click Error: {ex}");}
 		}
 
-        [MVControlEvent("AutoTxCoinsBtn", "Click")]
-		void AutoTxCoinsBtn_Click(object sender, MVControlEventArgs e)
-		{
-			try
-			{
-                if (!isinitialized) {return;}
-                int.TryParse(autoTxInput.Text, out int autotxcoincnt);
-                autotxcoin = !autotxcoin;
-                Util.WriteToChat($"Auto Coin Transfer is {(autotxcoin ? "Enabled" : "Disabled")}");
-                AutoTxCoinsBtn.Text = $"Auto Tx: {(autotxcoin ? "Enabled" : "Disabled")}";
-                SaveSettings();
-			}
-			catch (Exception ex) {Util.WriteToChat($"txLumBtn_Click Error: {ex}");}
-		}
-
         private void showpopup()
         {
 			try
@@ -1201,20 +1284,21 @@ namespace MelksLuminanceTracker
                 {
                     int tcointx = (int)currentCoins - 1;
                     if (enbDebug){Util.WriteToChat($"/b t e {tcointx} \"{txToName}\"");}
-                    if (tcointx == 0) {Util.WriteToChat("Not Enough Coins to Transfer"); return;}
+                    if (tcointx <= 1) {Util.WriteToChat("Not Enough Coins to Transfer"); return;}
                     Util.WriteToChat($"Transfering {tcointx} Coins to: {txToName}");
                     string tccmnd = $"/b t e {tcointx} \"{txToName}\"";
                     Util.Command(tccmnd);
                     currentCoins = 1;
                     if (coinusebank){totalReset();}
+                    else if (autoResetEnabled){totalReset();}
                 }
                 else if (totx == "Lum")
                 {
-                    int tlumtx = (int)currentLuminance - 1;
-                    if (enbDebug){Util.WriteToChat($"/b t l {tlumtx} \"{txToName}\"");}
-                    if (tlumtx == 0) {Util.WriteToChat("Not Enough Luminance to Transfer"); return;}
-                    Util.WriteToChat($"Transfering {tlumtx} Luminance to: {txToName}");
-                    string tlcmnd = $"/b t l {tlumtx} \"{txToName}\"";
+                    double tlumtx = currentLuminance - 1;
+                    if (enbDebug){Util.WriteToChat($"/b t l {tlumtx:f0} \"{txToName}\"");}
+                    if (tlumtx <= 1) {Util.WriteToChat("Not Enough Luminance to Transfer"); return;}
+                    Util.WriteToChat($"Transfering {tlumtx:n0} Luminance to: {txToName}");
+					string tlcmnd = $"/b t l {tlumtx:f0} \"{txToName}\"";
                     Util.Command(tlcmnd);
                     currentLuminance = 1;
                     if (autoResetEnabled){totalReset();}
@@ -1404,10 +1488,10 @@ namespace MelksLuminanceTracker
                     bool isPyreal2 = Regex.IsMatch(checkstr, @"one gives you ancient pyreal.$");//Forgotten One gives you Ancient Pyreal.
                     bool isEgg = Regex.IsMatch(checkstr, @"penguin gives you dire siraluun egg.$"); //Dire Siraluun Penguin gives you Dire Siraluun Egg.  100 Trade Notes (250,000).10 Enlightened Coin. per 100
                     bool isSnowTrnk = Regex.IsMatch(checkstr, @"snowman gives you ancient falatacot trinket.$"); //Unhappy Snowman gives you Ancient Falatacot Trinket.
-                    bool isSnowAeth = Regex.IsMatch(checkstr, @"snowman gives you coalesced aetheria.$"); //Unhappy Snowman gives you Coalesced Aetheria.
+                    bool isSnowAeth = Regex.IsMatch(checkstr, @"snowman gives you blue aetheria chunk.$"); //Unhappy Snowman gives you Blue Aetheria Chunk.
                     bool isSnowMMD = Regex.IsMatch(checkstr, @"snowman gives you trade note (250,000).$"); //Unhappy Snowman gives you Trade Note (250,000).
-                    bool isJam = Regex.IsMatch(checkstr, @"golem gives you straberry jam jar.$"); //Strawberry Jam Golem gives you Straberry Jam Jar.
-                    bool isAetheria = Regex.IsMatch(checkstr, @"gives you coalesced aetheria.$"); //Coruscating Death gives you Coalesced Aetheria.
+                    bool isJam = Regex.IsMatch(checkstr, @"golem gives you strawberry jam jar.$"); //Strawberry Jam Golem gives you Strawberry Jam Jar.
+                    bool isAetheria = Regex.IsMatch(checkstr, @"gives you red aetheria chunk.$"); //Coruscating Death gives you Coalesced Aetheria.    Pancake Liberator gives you Red Aetheria Chunk
                     bool isTrinket = Regex.IsMatch(checkstr, @"gives you ancient empyrean trinket.$"); //Coruscating Death gives you Ancient Empyrean Trinket.
                     
                     if (isSnowAeth) {CoinMode = 4; if (startmode != CoinMode){totalReset();} curBAetheria += 1;} //0=red, 1=egg, 2=shells, 3=coins, 4=snowmen, 5=Jam, 6=Skull  
