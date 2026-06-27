@@ -12,8 +12,10 @@ can keep the pet out permanently or summon when monsters are near.  will not dis
 <{MelksPetSummoner}>: /mpets remove <name>   Remove a pet device by name fragment <br />
 <{MelksPetSummoner}>: /mpets list            List tracked pets <br />
 <{MelksPetSummoner}>: /mpets status          Show current state <br />
-<{MelksPetSummoner}>: Click the checkbox in the list to toggle a pet on/off <br /> <br />
-
+<{MelksPetSummoner}>: Click the checkbox in the list to toggle a pet on/off <br /> 
+ 
+haven't tested it with multiple pets selected.  no reason to do that yet <br />
+want to eventually add in auto summoning based on element needed.   <br /> <br />
 
 ***Melk's Luminance Tracker for Asheron's Call***
 
