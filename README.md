@@ -1,3 +1,20 @@
+**Melk's Pet Tracker**
+
+Created with ai (of course)
+works pretty well, recharges below a threshold, saves states.
+add the pets you want by name or having them selected when you click add.
+can keep the pet out permanently or summon when monsters are near.  will not dismiss the pet or resummon unnecessarily.
+
+<{MelksPetSummoner}>: --- MelksPetSummoner Commands ---
+<{MelksPetSummoner}>: /mpets on|off          Enable/disable auto-summon
+<{MelksPetSummoner}>: /mpets add <name>      Add a pet device by name fragment
+<{MelksPetSummoner}>: /mpets add             (with item selected in inventory, adds that item directly)
+<{MelksPetSummoner}>: /mpets remove <name>   Remove a pet device by name fragment
+<{MelksPetSummoner}>: /mpets list            List tracked pets
+<{MelksPetSummoner}>: /mpets status          Show current state
+<{MelksPetSummoner}>: Click the checkbox in the list to toggle a pet on/off
+
+
 ***Melk's Luminance Tracker for Asheron's Call***
 
 If installing the DLL fails, restart decal and try using the DLL within the zip file.<br />
