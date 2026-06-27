@@ -1,4 +1,4 @@
-**Melk's Pet Tracker**
+**Melk's Pet Summoner**
 
 Created with ai (of course) <br />
 works pretty well, recharges below a threshold, saves states. <br />
