@@ -15,8 +15,9 @@
 	            <control progid="DecalControls.StaticText" name="timeLabel" left="0" top="160" width="110" height="20" text="Run Time: 00:00"/>
 	            <control progid="DecalControls.StaticText" name="ctimeLabel" left="115" top="160" width="75" height="20" text="Time: 00:00"/>
                 <control progid="DecalControls.PushButton" name="bankButton" left="5" top="180" width="30" height="20" text="/b"/>  
-                <control progid="DecalControls.PushButton" name="qbankButton" left="45" top="180" width="30" height="20" text="q/b"/>  
-                <control progid="DecalControls.PushButton" name="clapButton" left="105" top="180" width="90" height="20" text="/Clap All"/>
+                <control progid="DecalControls.PushButton" name="qbankButton" left="40" top="180" width="30" height="20" text="q/b"/>  
+                <control progid="DecalControls.PushButton" name="depositButton" left="75" top="180" width="35" height="20" text="/b d"/>
+                <control progid="DecalControls.PushButton" name="clapButton" left="115" top="180" width="80" height="20" text="clap"/>
                 <control progid="DecalControls.StaticText" name="atcCurLbl" left="0" top="200" width="200" height="20" text="A: 0 T: 0 C: 0 CAvail: 0"/>
           	</control>
         </page>
@@ -79,7 +80,6 @@
                 <control progid="DecalControls.Checkbox" name="coinBankBtn" left="5" top="75" width="150" height="20" text="Coin by Bank" checked="false" />
                 <control progid="DecalControls.PushButton" name="resetBtn" left="5" top="100" width="140" height="20" text="Reset Counters"/>
                 <control progid="DecalControls.Checkbox" name="calcEnableBtn" left="5" top="125" width="75" height="20" text="Enabled" checked="true" />
-                <control progid="DecalControls.Checkbox" name="BuffEnableChk" left="90" top="125" width="75" height="20" text="Buffs" checked="true" />
                 <control progid="DecalControls.StaticText" name="pollratelbl" left="5" top="150" width="60" height="20" text="Poll Rate:"/>
                 <control progid="DecalControls.Edit" name="pollRateInput" left="70" top="150" width="50" height="20" text="1"/>
                 <control progid="DecalControls.PushButton" name="UpdatePoll" left="130" top="150" width="70" height="20" text="Update Poll"/>

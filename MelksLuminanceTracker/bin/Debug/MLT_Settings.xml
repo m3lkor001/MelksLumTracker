@@ -3,12 +3,12 @@
     <AutoResetEnabled>False</AutoResetEnabled>
     <coinusebank>False</coinusebank>
     <progenable>True</progenable>
-    <ConversionRate>81</ConversionRate>
-    <ConversionLRate>82</ConversionLRate>
+    <ConversionRate>78</ConversionRate>
+    <ConversionLRate>79</ConversionLRate>
     <pollRate>5</pollRate>
     <txToName>Melkoran</txToName>
-    <autoTxInput>5</autoTxInput>
-    <autoTxLumInput>5000000000</autoTxLumInput>
+    <autoTxInput>50</autoTxInput>
+    <autoTxLumInput>1000000000</autoTxLumInput>
     <autotxcoin>False</autotxcoin>
     <autotxlum>False</autotxlum>
     <buffenable>False</buffenable>
@@ -17,14 +17,14 @@
     <AutoResetEnabled>False</AutoResetEnabled>
     <coinusebank>False</coinusebank>
     <progenable>True</progenable>
-    <ConversionRate>73</ConversionRate>
-    <ConversionLRate>74</ConversionLRate>
+    <ConversionRate>78</ConversionRate>
+    <ConversionLRate>79</ConversionLRate>
     <pollRate>5</pollRate>
     <txToName>Melka Summoner</txToName>
     <autoTxInput>50</autoTxInput>
     <autoTxLumInput>1000000000</autoTxLumInput>
     <autotxcoin>False</autotxcoin>
-    <autotxlum>True</autotxlum>
+    <autotxlum>False</autotxlum>
     <buffenable>False</buffenable>
   </Character>
   <Character key="InfiniteLeaftide-Melkbug">
@@ -48,6 +48,10 @@
     <txToName>
     </txToName>
     <autoTxInput>50</autoTxInput>
+    <autoTxLumInput>1000000000</autoTxLumInput>
+    <autotxcoin>False</autotxcoin>
+    <autotxlum>False</autotxlum>
+    <buffenable>True</buffenable>
   </Character>
   <Character key="InfiniteLeaftide-Melkabow">
     <AutoResetEnabled>False</AutoResetEnabled>
@@ -70,6 +74,10 @@
     <txToName>
     </txToName>
     <autoTxInput>50</autoTxInput>
+    <autoTxLumInput>1000000000</autoTxLumInput>
+    <autotxcoin>False</autotxcoin>
+    <autotxlum>False</autotxlum>
+    <buffenable>True</buffenable>
   </Character>
   <Character key="InfiniteLeaftide-Melkas Mule">
     <AutoResetEnabled>False</AutoResetEnabled>
@@ -81,6 +89,10 @@
     <txToName>
     </txToName>
     <autoTxInput>50</autoTxInput>
+    <autoTxLumInput>1000000000</autoTxLumInput>
+    <autotxcoin>False</autotxcoin>
+    <autotxlum>False</autotxlum>
+    <buffenable>True</buffenable>
   </Character>
   <Character key="InfiniteLeaftide-Melkora">
     <AutoResetEnabled>False</AutoResetEnabled>
@@ -95,6 +107,7 @@
     <autoTxLumInput>1000000000</autoTxLumInput>
     <autotxcoin>False</autotxcoin>
     <autotxlum>False</autotxlum>
+    <buffenable>True</buffenable>
   </Character>
   <Character key="InfiniteLeaftide-Melkoras">
     <AutoResetEnabled>False</AutoResetEnabled>
@@ -109,6 +122,7 @@
     <autoTxLumInput>1000000000</autoTxLumInput>
     <autotxcoin>False</autotxcoin>
     <autotxlum>False</autotxlum>
+    <buffenable>False</buffenable>
   </Character>
   <Character key="InfiniteLeaftide-Melkoria">
     <AutoResetEnabled>False</AutoResetEnabled>
@@ -123,5 +137,20 @@
     <autoTxLumInput>1000000000</autoTxLumInput>
     <autotxcoin>False</autotxcoin>
     <autotxlum>False</autotxlum>
+  </Character>
+  <Character key="InfiniteLeaftide-Melka Qbin">
+    <AutoResetEnabled>False</AutoResetEnabled>
+    <coinusebank>False</coinusebank>
+    <progenable>True</progenable>
+    <ConversionRate>66.2</ConversionRate>
+    <ConversionLRate>66</ConversionLRate>
+    <pollRate>1</pollRate>
+    <txToName>
+    </txToName>
+    <autoTxInput>50</autoTxInput>
+    <autoTxLumInput>1000000000</autoTxLumInput>
+    <autotxcoin>False</autotxcoin>
+    <autotxlum>False</autotxlum>
+    <buffenable>True</buffenable>
   </Character>
 </MLT_Settings>

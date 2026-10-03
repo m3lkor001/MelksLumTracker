@@ -21,7 +21,7 @@ using VirindiViewService;
 using VirindiViewService.Controls;
 using VirindiViewService.XMLParsers;
 
-
+//using uTank2;
 /*
  * Created by Mag-nus. 8/19/2011, VVS added by Virindi-Inquisitor.
  * 
@@ -59,12 +59,21 @@ namespace MelksLuminanceTracker
 	[FriendlyName("MelksLuminanceTracker")]
 	public class PluginCore : PluginBase
 	{   
+        // Exposes the running instance so other plugins (e.g. MelksPetSummoner) can read
+        // live stats via reflection, the same way this codebase already reaches into
+        // UtilityBelt's UBHelper.vTank.Instance. Set in Startup(), cleared in Shutdown().
+        public static PluginCore Instance;
+
+        // Read-only view of the "Effective L/hr" figure shown on this plugin's own tab
+        // (luminRate + lumRateCoin - see updateStats()/wherever effectiveLRate is computed).
+        public double EffectiveLuminanceRate { get { return effectiveLRate; } }
+
         internal static Decal.Adapter.Wrappers.PluginHost MyHost;
+        //private VTankControl _vtank = new VTankControl();
         private double version = 1.0;
 		private double initialCoins = -1;
 		private double initialLuminance = -1;
 		private double currentCoins;
-        private double curPyreals = 0;
         private double curWEnlCoin = 0;
         private double curLegKey = 0;
         private double curMythKey = 0;
@@ -95,24 +104,33 @@ namespace MelksLuminanceTracker
         private double xpToLevel = 0;
 		private double conversionCRate = 66.2;
         private double conversionLRate = 66;
+        private double _spellOneDuration = 0;
+        private double _spellTwoDuration = 0;
+        private double autotxlumcnt = 8000000000;
+        private double curMMD = 0;
+        private double autotxluminput = 0;
         private long current_luminance = 0;
+        private long coinclapavail = 0;
+        private long curPyreals = 0;
         private int currentcoincount;
         private int curAetheria = 0;
         private int curBAetheria = 0;
-        private int curTrinket = 0;
-        private int coinclapavail = 0;
+        private int curTrinket = 0;    
+        private int curENLC = 0;    
         private int pollRate = 1;
-        private int autotxcoincnt = 50;
-        private double autotxlumcnt = 8000000000;
+        private int autotxcoincnt = 50;        
         private int CoinMode = 0;  //0=red, 1=egg, 2=shells, 3=coins, 4=snowmen, 5=Jam, 6=Skulls
-        private int curFaltTrinket = 0;
-        private double curMMD = 0;
+        private int curFaltTrinket = 0;        
         private int curTimelostCoins = 0;
         private int curSlimyShells = 0;
         private int curPengEgg = 0;
         private int curJams = 0;
+        private int curSpeck = 0;
         private int curSkulls = 0;
         private int curWEC = 0;
+        private int autotxcoininput = 0;
+        private const int TARGET_SPELL_ID_1 = 4530; // Creature 8
+        private const int TARGET_SPELL_ID_2 = 4024; // Asheron's lesser benediction
         private TimeSpan elapsed;
         private TimeSpan timetolvl;
         private TimeSpan timeclap;
@@ -136,6 +154,7 @@ namespace MelksLuminanceTracker
         private bool popupvis2 = false;
         private bool popupinit = false;
         private bool popupinit2 = false;
+        private bool buffCmdSnt = false;
         private string txToName = "";
         private string configPath;
         private string characterKey;
@@ -173,7 +192,6 @@ namespace MelksLuminanceTracker
         [MVControlReference("txToInput")] private ITextBox txToInput = null;
         [MVControlReference("autoTxInput")] private ITextBox autoTxInput = null;
         [MVControlReference("AutoTxLumBtn")] private ICheckBox AutoTxLumBtn = null;
-        [MVControlReference("BuffEnableChk")] private ICheckBox BuffEnableChk = null;
         [MVControlReference("autoTxLumInput")] private ITextBox autoTxLumInput = null;
         [MVControlReference("coinRateLumLabel")] private IStaticText coinRateLumLabel = null;
         [MVControlReference("atcCurLbl")] private IStaticText atcCurLbl = null;
@@ -218,7 +236,8 @@ namespace MelksLuminanceTracker
                 MyHost = Host;
 				Globals.Init("MelksLuminanceTracker", Host, Core);
 				//Initialize the view.
-				MVWireupHelper.WireupStart(this, Host);                
+				MVWireupHelper.WireupStart(this, Host);
+                Instance = this;
 			}
 			catch (Exception ex) {Util.WriteToChat($"Startup Error: {ex}");}
 		}
@@ -230,6 +249,7 @@ namespace MelksLuminanceTracker
                 		//Destroy the view.
                         
                			MVWireupHelper.WireupEnd(this);
+                Instance = null;
 			}
 			catch (Exception ex) {Util.WriteToChat($"Shutdown Error: {ex}");}
 		}
@@ -340,7 +360,7 @@ namespace MelksLuminanceTracker
                 XmlNode node3 = charNode.SelectSingleNode("ConversionLRate");
                 if (node3 != null && double.TryParse(node3.InnerText, out double rate2))
                 {
-                    conversionCRate = rate2;
+                    conversionLRate = rate2;
                     convRateLInput.Text = rate2.ToString();
                 }
                 // Load Poll Rate
@@ -386,13 +406,6 @@ namespace MelksLuminanceTracker
                     autotxlum = bool.Parse(node11.InnerText);
                     AutoTxLumBtn.Checked = autotxlum;
                     //calcEnableBtn.Text = $"{(progenable ? "Enabled" : "Disabled")}";
-                }
-                // BuffEnableChk
-                XmlNode node12 = charNode.SelectSingleNode("buffenable");
-                if (node11 != null) 
-                {
-                    buffenable = bool.Parse(node12.InnerText);
-                    BuffEnableChk.Checked = buffenable;
                 }
             }
             catch (Exception ex) {Util.WriteToChat($"LoadSettings Settings Error: {ex}");}
@@ -481,11 +494,6 @@ namespace MelksLuminanceTracker
                 autotxlumElem.InnerText = autotxlum.ToString();
                 ReplaceOrAppend(charNode, autotxlumElem);
 
-                // Buff Enable 
-                XmlElement autobuffElem = doc.CreateElement("buffenable");
-                autobuffElem.InnerText = buffenable.ToString();
-                ReplaceOrAppend(charNode, autobuffElem);
-
                 doc.Save(configPath);
             }
             catch (Exception ex) {Util.WriteToChat($"SaveSettings Error: {ex}");}
@@ -510,6 +518,26 @@ namespace MelksLuminanceTracker
 			}
 			catch (Exception ex) {Util.WriteToChat($"UpdateUI Error: {ex}");}
 		}
+
+        void Core_MessageProcessed(object sender, Decal.Adapter.MessageProcessedEventArgs e)
+		{
+			//Need this to track luminance
+			switch (e.Message.Type)
+			{
+				case 0x02CF: //Set character qword
+                    break;
+                case 0xF7B0: //Ordered message Game Event
+                    switch (e.Message.Value<int>("event"))
+                    {
+                        case 0x02C2: // Apply Enchantment
+                            //if (enbDebug) {Util.WriteToChat(e.Message.Value<int>("event"));}
+                        break;
+                    }
+                    break;
+                case 0xF7B1: //Ordered message Game Action
+                    break;
+            }
+        }
 
         private void bankPoll(bool eb) 
         {
@@ -542,8 +570,62 @@ namespace MelksLuminanceTracker
                 doCalcs();
                 updateGUI();
                 CheckInputs();
+                if (buffenable){ CheckBuffs();}
             }
             catch (Exception ex) {Util.WriteToChat($"QuickUpdateUI Error: {ex}");}
+        }
+
+        private void CheckBuffs()
+        {
+            try
+            {
+                _spellOneDuration = 0;
+                _spellTwoDuration = 0;
+                if (Core.CharacterFilter == null) {return;}
+                foreach (EnchantmentWrapper buff in Core.CharacterFilter.Enchantments)
+                {
+                    if (buff.SpellId == TARGET_SPELL_ID_1)
+                    {
+                        _spellOneDuration = buff.TimeRemaining;
+                    }
+                    else if (buff.SpellId == TARGET_SPELL_ID_2)
+                    {
+                        _spellTwoDuration = buff.TimeRemaining;
+                    }
+                }
+                //bool isEngineOn = _vtank.IsBuffingEnabled();
+                if (_spellOneDuration < 600  && !buffCmdSnt)
+                {
+                    string enbfcmnd = "/vt opt set EnableBuffing True";
+                    Util.Command(enbfcmnd);
+                    string fbcmnd = "/vt forcebuff";
+                    Util.Command(fbcmnd);
+                    //_vtank.SetBuffing(true);
+                    //_vtank.StartForceBuff();
+                    buffCmdSnt = true;
+                    Util.WriteToChat($"Spell 1 Time = {_spellOneDuration:F1}s");
+                    Util.WriteToChat($"Spell 2 Time = {_spellTwoDuration:F1}s");
+                }
+                if (_spellTwoDuration > 86000 && buffCmdSnt)
+                {
+                    string disbfcmnd = "/vt opt set EnableBuffing False";
+                    Util.Command(disbfcmnd);
+                    string cfbcmnd = "/vt cacelforcebuff";
+                    Util.Command(cfbcmnd);                    
+                    //_vtank.StopForceBuff();
+                    //_vtank.SetBuffing(false);
+                    buffCmdSnt = false;
+                    Util.WriteToChat($"Spell 1 Time = {_spellOneDuration:F1}s");
+                    Util.WriteToChat($"Spell 2 Time = {_spellTwoDuration:F1}s");
+                }
+            }
+            catch (Exception ex) {Util.WriteToChat($"CheckBuffs Error: {ex}");}
+            /*
+                /vt forcebuff
+                /vt opt set EnableBuffing True/False
+                spellid 4530 for Incantation of Creature Enchantment Mastery Self   
+                spellid 3811 for Blackmoor’s Favor                
+            */
         }
 
         private void updateGUI()
@@ -571,6 +653,8 @@ namespace MelksLuminanceTracker
                 else if (CoinMode == 4) {atcCurLbl.Text = $"BA: {curBAetheria} AFT: {curFaltTrinket} WC: {curWEC} MMD: {curMMD:n0} CAvail: {coinclapavail}";}
                 else if (CoinMode == 5) {atcCurLbl.Text = $"Jams: {curJams} C: {currentcoincount}";}
                 else if (CoinMode == 6) {atcCurLbl.Text = $"Skulls: {curSkulls} WEC: {currentcoincount:n0} MMD: {curMMD:n0}";}
+                else if (CoinMode == 7) {atcCurLbl.Text = $"Specks: {curSpeck}";}
+                else if (CoinMode == 8) {atcCurLbl.Text = $"Enl Coins: {curENLC}";}
                 //Spec Tab
                 KillLabel.Text = $"Kills: {killsTotal}";
                 KillHrLabel.Text = $"Kills/hr: {killsperhr}";
@@ -647,23 +731,36 @@ namespace MelksLuminanceTracker
                 Util.WriteToChat($"Transfer to updated to - {txToName}");
                 needsave = true;
             }
-            /*if(((int)(autoTxInput.Text) > autotxcoin) || ((int)(autoTxInput.Text) < autotxcoin))
+            int.TryParse(autoTxInput.Text, out autotxcoininput);
+            if (autotxcoininput < 1) {autotxcoininput = 50;}
+            if((autotxcoininput > autotxcoincnt) || (autotxcoininput < autotxcoincnt))
             {
-                autotxcoin = autoTxInput.Text;
+                autotxcoincnt = autotxcoininput;
                 Util.WriteToChat($"Auto coin transfer amount updated to - {autotxcoin}");
                 needsave = true;
             }
-            if(((int)(autoTxLumInput.Text) != autotxlum) || ((int)(autoTxLumInput.Text) != autotxlum))
+            double.TryParse(autoTxLumInput.Text, out autotxluminput);
+            if (double.IsNaN(autotxluminput) || double.IsInfinity(autotxluminput)) {autotxluminput = 5000000000;}
+            if(autotxluminput != autotxlumcnt)
             {
-                autotxlum = autoTxLumInput.Text;
+                autotxlumcnt = autotxluminput;
                 Util.WriteToChat($"Auto lum transfer amount updated to - {autotxlum}");
                 needsave = true;
-            }*/
-            if(BuffEnableChk.Checked != buffenable)
+            }
+            if(pollRateInput.Text != pollRate.ToString())
             {
-                buffenable = BuffEnableChk.Checked;
-                Util.WriteToChat($"Enable Buffs - {buffenable}");
-                needsave = true;
+                if (!int.TryParse(pollRateInput.Text, out int newPollRate) || newPollRate < 1)
+                {
+                    Util.WriteToChat($"Invalid Poll Rate '{pollRateInput.Text}', keeping {pollRate} min");
+                    pollRateInput.Text = pollRate.ToString();
+                }
+                else
+                {
+                    pollRate = newPollRate;
+                    pollTimer.Interval = pollRate * 60000;
+                    Util.WriteToChat("Updated Poll Rate Minutes: " + pollRate);
+                    needsave = true;
+                }
             }
             if(needsave){SaveSettings();}
             needsave = false;
@@ -697,7 +794,7 @@ namespace MelksLuminanceTracker
                 }
                 else if ((tmpval >= 1000000000000000) && (tmpval < 1000000000000000000))
                 {
-                    tmpval = tmpval / 1000000000000;
+                    tmpval = tmpval / 1000000000000000;
                     tmpval = Math.Round(tmpval, 3); 
                     tmpvalstr = $"{tmpval} Quad";
                 }
@@ -765,6 +862,7 @@ namespace MelksLuminanceTracker
                 conversionLRate = conversionLRate * 1000000;
                 Util.WriteToChat($"Conversion Rate set to 1 Enl Coin per {conversionCRate:n0} Luminance");
                 Util.WriteToChat($"Conversion Rate set to {conversionLRate:n0} Luminance per coin");
+                SaveSettings();
             }
             catch (Exception ex) {Util.WriteToChat($"updateconversion Error: {ex}");}
 		}
@@ -804,9 +902,11 @@ namespace MelksLuminanceTracker
                 curSlimyShells = 0;
                 curPengEgg = 0;
                 curSkulls = 0;
+                curSpeck = 0;
                 curJams = 0;
                 curMMD = 0;
                 curWEC = 0;
+                curENLC = 0;
                 
 				startTime = DateTime.Now;
                 //Main Tab
@@ -835,6 +935,8 @@ namespace MelksLuminanceTracker
                 else if (CoinMode == 4) {atcCurLbl.Text = "BA: 0 AFT: 0 WC: 0 CAvail: 0";}
                 else if (CoinMode == 5) {atcCurLbl.Text = "Jams: 0 C: 0";}
                 else if (CoinMode == 6) {atcCurLbl.Text = "Skulls: 0 WEC: 0 MMD: 0";}
+                else if (CoinMode == 7) {atcCurLbl.Text = "Specks: 0";}
+                else if (CoinMode == 8) {atcCurLbl.Text = "Enl Coins: 0";}
                 //XP Tab
                 xpTotalLabel.Text = "Total XP: 0";
                 xpEarnedLabel.Text = "Earned XP: 0";
@@ -910,6 +1012,18 @@ namespace MelksLuminanceTracker
                         currentcoincount = (int)(curSkulls * 2);
                     }
                 }
+                else if (CoinMode == 7)  //curSpeck 100 Skulls = 100 Coins
+                {
+                    if (curSpeck >= 1){
+                        currentcoincount = (int)(curSpeck * 1);
+                    }
+                }
+                else if (CoinMode == 8) //Enl Coins
+                {
+                    if (curENLC >= 1){
+                        currentcoincount = curENLC;
+                    }
+                }
                 killsperhr = hours > 0 ? Math.Round(killsTotal / hours) : 0;
                 //XP Calculations
                 if (xpInitVal == -1)
@@ -968,11 +1082,15 @@ namespace MelksLuminanceTracker
                     {
                         coindiff = curJams * .1;
                     }
+                    if (CoinMode == 8) //Enl Coins
+                    {
+                        coindiff = curENLC;
+                    }
                 }
-	            coinRate = hours > 0 ? Math.Round(coindiff / hours, 1) : 0;
-                effectiveCRate = coinRate + coinRateLum;
+                coinRate = hours > 0 ? Math.Round(coindiff / hours, 1) : 0;
                 // Lum per hour from Coins
                 coinRateLum = hours > 0 ? Math.Round((luminRate / conversionLRate)) : 0;
+                effectiveCRate = coinRate + coinRateLum;
                 lumRateCoin =  hours > 0 ? Math.Round((coinRate * conversionCRate), 1) : 0;
                 effectiveLRate = luminRate + lumRateCoin;
                 // Other-kill Luminance
@@ -980,18 +1098,18 @@ namespace MelksLuminanceTracker
                 if (otherLuminance < 0){otherLuminance=0;}
                 
                 // Luminance hr rates for kill/other
-                luminkillRate = hours > 0 ? Math.Round((lumdiff - otherLuminance) / hours, 1) : 0;
-                luminOtherRate = hours > 0 ? Math.Round((lumdiff - killLuminance) / hours, 1) : 0;
-                coinRateKillLum = hours > 0 ? Math.Round((luminkillRate / conversionCRate)) : 0;
-                coinRateOtherLum = hours > 0 ? Math.Round((luminOtherRate / conversionCRate)) : 0;
+                luminkillRate = hours > 0 ? Math.Round(killLuminance / hours, 1) : 0;
+                luminOtherRate = hours > 0 ? Math.Round(otherLuminance / hours, 1) : 0;
+                coinRateKillLum = hours > 0 ? Math.Round((luminkillRate / conversionLRate)) : 0;
+                coinRateOtherLum = hours > 0 ? Math.Round((luminOtherRate / conversionLRate)) : 0;
                 effectivekillRate = coinRate + coinRateKillLum;
                 effectiveOtherRate = coinRate + coinRateOtherLum;
                 // Coins clappable
                 if (curPyreals < 250000) {coinclapavail = 0;}
                 else{ 
-                    coinclapavail = (int)curPyreals / 250000;
+                    coinclapavail = (long)curPyreals / 250000;
                     if (coinRate >= 1){                        
-                        double clapRate = curPyreals / (coinRate * 250000);
+                        double clapRate = (double)(curPyreals) / (coinRate * 250000);
                         double tmpclaphrs;
                         double tmpclapmin;
                         if (clapRate >= 1) {
@@ -1010,21 +1128,21 @@ namespace MelksLuminanceTracker
                     }
                 }
                 //Coin Transfer
-                int.TryParse(autoTxInput.Text, out int autotxcoincnt);
+                //int.TryParse(autoTxInput.Text, out int autotxcoincnt);
                 if (autotxcoin)
                 {                    
                     if (currentCoins >= autotxcoincnt)
                     {
-                        txStuff("Coins");
+                        QueueTransfer("Coins");
                     }
                 }
                 //Lum Transfer                
-                double.TryParse(autoTxLumInput.Text, out double autotxlumcnt);
+                //double.TryParse(autoTxLumInput.Text, out double autotxlumcnt);
                 if (autotxlum)
                 {
                     if (currentLuminance >= autotxlumcnt)
                     {
-                        txStuff("Lum");
+                        QueueTransfer("Lum");
                     }
                 }
                 // 0 if negative
@@ -1097,6 +1215,17 @@ namespace MelksLuminanceTracker
 			catch (Exception ex) {Util.WriteToChat($"clapButton_Click Error: {ex}");}
 		}
 
+        [MVControlEvent("depositButton", "Click")]
+		void depositButton_Click(object sender, MVControlEventArgs e)
+		{
+			try
+			{
+                if (!isinitialized) {return;}
+                Util.Command("/b d");
+            }
+			catch (Exception ex) {Util.WriteToChat($"depositButton_Click Error: {ex}");}
+		}
+
         [MVControlEvent("UpdatePoll", "Click")]
 		void UpdatePoll_Click(object sender, MVControlEventArgs e)
 		{
@@ -1113,11 +1242,13 @@ namespace MelksLuminanceTracker
         {
             try
             {
-                if (pollRateInput.Text == null) {pollRate = 1;}
-                else{
-                    int.TryParse(pollRateInput.Text, out pollRate);
+                if (pollRateInput.Text == null || !int.TryParse(pollRateInput.Text, out int newPollRate) || newPollRate < 1)
+                {
+                    Util.WriteToChat($"Invalid Poll Rate '{pollRateInput.Text}', keeping {pollRate} min");
+                    pollRateInput.Text = pollRate.ToString();
+                    return;
                 }
-                if (pollRate < 1){pollRate = 1;}
+                pollRate = newPollRate;
                 pollTimer.Interval = pollRate * 60000;
                 Util.WriteToChat("Updated Poll Rate Minutes: " + pollRate);
                 
@@ -1210,7 +1341,7 @@ namespace MelksLuminanceTracker
 			try
 			{
                 if (!isinitialized) {return;}
-                txStuff("Coins");
+                QueueTransfer("Coins");
                 SaveSettings();
 			}
 			catch (Exception ex) {Util.WriteToChat($"txCoinsBtn_Click Error: {ex}");}
@@ -1222,7 +1353,7 @@ namespace MelksLuminanceTracker
 			try
 			{
                 if (!isinitialized) {return;}
-                txStuff("Lum");
+                QueueTransfer("Lum");
                 SaveSettings();
 			}
 			catch (Exception ex) {Util.WriteToChat($"txLumBtn_Click Error: {ex}");}
@@ -1274,6 +1405,42 @@ namespace MelksLuminanceTracker
 			catch (Exception ex) {Util.WriteToChat($"showpopup Error: {ex}");}
 		}
         
+        private DateTime lastTransferTime = DateTime.MinValue;
+        private const double TRANSFER_DELAY_SECONDS = 6.0;
+
+        // Wraps txStuff so that transfers requested less than 6 seconds after the
+        // last one (the game's own transfer cooldown) are delayed just enough to
+        // clear that cooldown instead of being sent immediately and failing.
+        private void QueueTransfer(string totx)
+        {
+            try
+            {
+                double sinceLast = (DateTime.Now - lastTransferTime).TotalSeconds;
+                if (sinceLast >= TRANSFER_DELAY_SECONDS)
+                {
+                    lastTransferTime = DateTime.Now;
+                    txStuff(totx);
+                }
+                else
+                {
+                    double delaySeconds = TRANSFER_DELAY_SECONDS - sinceLast;
+                    // Reserve this slot now so a third rapid request queues behind this one too.
+                    lastTransferTime = lastTransferTime.AddSeconds(TRANSFER_DELAY_SECONDS);
+                    Util.WriteToChat($"Transfer cooldown active, sending {totx} transfer in {delaySeconds:n1} seconds");
+                    System.Timers.Timer delayTimer = new System.Timers.Timer(delaySeconds * 1000);
+                    delayTimer.AutoReset = false;
+                    delayTimer.Elapsed += (s, e) =>
+                    {
+                        try { txStuff(totx); }
+                        catch (Exception ex) { Util.WriteToChat($"Queued Transfer Error: {ex}"); }
+                        finally { delayTimer.Dispose(); }
+                    };
+                    delayTimer.Start();
+                }
+            }
+            catch (Exception ex) {Util.WriteToChat($"QueueTransfer Error: {ex}");}
+        }
+
         private void txStuff(string totx)
         {
             try
@@ -1406,7 +1573,7 @@ namespace MelksLuminanceTracker
                 if (checkstr.StartsWith("[bank] pyreals: "))
                 {
                     string tmppy = checkstr.Substring(16).Replace(",","");
-                    curPyreals = double.Parse(tmppy);
+                    curPyreals = long.Parse(tmppy);
                 }
                 if (checkstr.StartsWith("[bank] luminance: "))
                 {
@@ -1439,7 +1606,10 @@ namespace MelksLuminanceTracker
                 if (checkstr.StartsWith("you've banked ")) //You've banked 379,567 Luminance.
                 {
                     checkstr = checkstr.Replace(",", "");
-                    killLuminance += double.Parse(Regex.Match(checkstr, @"\d+").Value);
+                    var match = Regex.Match(checkstr, @"\d+");
+                    if (match.Success){
+                        killLuminance += double.Parse(match.Value);
+                    }
                     killsTotal += 1;
                 }
                 if ((eatbank == true) && (checkstr.StartsWith("[bank]"))) {e.Eat = true;}
@@ -1449,7 +1619,7 @@ namespace MelksLuminanceTracker
                     curWEnlCoin = double.Parse(tmpwec);
                     eatbank = false; 
                     bankdata = false;
-                    clrTimer.Stop();
+                    if (clrTimer != null) clrTimer.Stop();
                     if (!progenable){ return;}
                     doCalcs();
                     updateGUI();
@@ -1465,7 +1635,7 @@ namespace MelksLuminanceTracker
                     eatxp = false;
                 }
                 if (autoResetEnabled){
-                    bool isAugUsage= false;
+                    bool isAugUsage = false;
                     if (checkstr.StartsWith("you have successfully increased your")) {isAugUsage = true;}                    
                     bool isCoinTransfer = Regex.IsMatch(checkstr,
                         @"^(transferred \d+ enlightened coins to .+|" +  //Transferred 25 Enlightened coins to Melka Summoner
@@ -1491,8 +1661,10 @@ namespace MelksLuminanceTracker
                     bool isSnowAeth = Regex.IsMatch(checkstr, @"snowman gives you blue aetheria chunk.$"); //Unhappy Snowman gives you Blue Aetheria Chunk.
                     bool isSnowMMD = Regex.IsMatch(checkstr, @"snowman gives you trade note (250,000).$"); //Unhappy Snowman gives you Trade Note (250,000).
                     bool isJam = Regex.IsMatch(checkstr, @"golem gives you strawberry jam jar.$"); //Strawberry Jam Golem gives you Strawberry Jam Jar.
+                    bool isSpeck = Regex.IsMatch(checkstr, @"gives you anachronistic speck.$");   //Anachronistic Fiun gives you Anachronistic Speck.
                     bool isAetheria = Regex.IsMatch(checkstr, @"gives you red aetheria chunk.$"); //Coruscating Death gives you Coalesced Aetheria.    Pancake Liberator gives you Red Aetheria Chunk
                     bool isTrinket = Regex.IsMatch(checkstr, @"gives you ancient empyrean trinket.$"); //Coruscating Death gives you Ancient Empyrean Trinket.
+                    bool isEnlCoin = Regex.IsMatch(checkstr, @"gives you enlightened coin.$"); //Tyranical Drudge Overlord gives you Enlightened Coin.
                     
                     if (isSnowAeth) {CoinMode = 4; if (startmode != CoinMode){totalReset();} curBAetheria += 1;} //0=red, 1=egg, 2=shells, 3=coins, 4=snowmen, 5=Jam, 6=Skull  
                     if (isSnowTrnk) {CoinMode = 4; if (startmode != CoinMode){totalReset();} curFaltTrinket += 1;}
@@ -1502,6 +1674,8 @@ namespace MelksLuminanceTracker
                     if (isEgg) {CoinMode = 1; if (startmode != CoinMode){totalReset();} curPengEgg += 1;}
                     if (isJam) {CoinMode = 5; if (startmode != CoinMode){totalReset();} curJams += 1;}
                     if (isSkull) {CoinMode = 6; if (startmode != CoinMode){totalReset();} curSkulls += 1;}
+                    if (isSpeck) {CoinMode = 7; if (startmode != CoinMode){totalReset();} curSpeck += 1;}
+                    if (isEnlCoin) {CoinMode = 8; if (startmode != CoinMode){totalReset();} curENLC += 1;}
                     if (isAetheria && !isSnowAeth){CoinMode = 0; if (startmode != CoinMode){totalReset();} curAetheria += 1;}
                     if (isTrinket) {CoinMode = 0; if (startmode != CoinMode){totalReset();} curTrinket += 1;}
                     if (startmode != CoinMode)
@@ -1514,6 +1688,8 @@ namespace MelksLuminanceTracker
                         else if (CoinMode == 4){tmpmodestr = "Snowmen Faltacot Trinkets/Blue Aetheria";}
                         else if (CoinMode == 5){tmpmodestr = "Straberry Jam Jars";}
                         else if (CoinMode == 6){tmpmodestr = "Badass Bone Skulls";}
+                        else if (CoinMode == 7){tmpmodestr = "Anachronistic Specks";}
+                        else if (CoinMode == 8){tmpmodestr = "Enlightened Coins";}
                         Util.WriteToChat($"Mode Changed to: {tmpmodestr}");
                     }
                 }
@@ -1576,7 +1752,7 @@ namespace MelksLuminanceTracker
                     Util.WriteToChat("/mlt silentpoll");
                     Util.WriteToChat("/mlt killpop");
                     Util.WriteToChat("/mlt xppop");
-                    Util.WriteToChat("/mlt mode [normal/eggs/shells/timelost/snowman/jams/skulls]");
+                    Util.WriteToChat("/mlt mode [normal/eggs/shells/timelost/snowman/jams/skulls/specks/ecoins]");
                     Util.WriteToChat("The Lum-Coin Conversion value is the price of 1 coin in millions of luminance.");
                     Util.WriteToChat("The Coin-Lum Conversion value is the amount of luminance you get for 1 coin.");
                     Util.WriteToChat("It will calculate how many coins/hr you make just from luminance.");
@@ -1636,6 +1812,12 @@ namespace MelksLuminanceTracker
                     if ((tokens[2].ToLower() == "skulls") || (tokens[2].ToLower() == "skull"))
                     {
                         CoinMode = 6;}
+                    if ((tokens[2].ToLower() == "specks") || (tokens[2].ToLower() == "speck"))
+                    {
+                        CoinMode = 7;}
+                    if ((tokens[2].ToLower() == "ecoins") || (tokens[2].ToLower() == "ecoin"))
+                    {
+                        CoinMode = 8;}
                     string tmpmodestr = "";
                     if (CoinMode == 0){tmpmodestr = "Normal Trinket/Aetheria";}
                     else if (CoinMode == 1){tmpmodestr = "Eggs";}
@@ -1644,6 +1826,8 @@ namespace MelksLuminanceTracker
                     else if (CoinMode == 4){tmpmodestr = "Snowmen Faltacot Trinkets/Blue Aetheria";}
                     else if (CoinMode == 5){tmpmodestr = "Straberry Jam Jars";}
                     else if (CoinMode == 6){tmpmodestr = "Badass Bone Skulls";}
+                    else if (CoinMode == 7){tmpmodestr = "Anachronistic Specks";}
+                    else if (CoinMode == 8){tmpmodestr = "Enlightened Coins";}
                     Util.WriteToChat($"Mode Changed to: {tmpmodestr}");
                     totalReset();
                 }
@@ -1672,12 +1856,12 @@ namespace MelksLuminanceTracker
                 }
                 if (tokens[1].ToLower() == "txcoins")
                 {
-                    txStuff("Coins");
+                    QueueTransfer("Coins");
                     SaveSettings();
                 }
                 if (tokens[1].ToLower() == "txlum")
                 {
-                    txStuff("Lum");
+                    QueueTransfer("Lum");
                     SaveSettings();
                 }
                 if (tokens[1].ToLower() == "killpop")
@@ -1714,8 +1898,70 @@ namespace MelksLuminanceTracker
                 }
             }
             catch (Exception ex) {Util.WriteToChat($"Command Line Processing Error: {ex}");}
-        }		
+        }
 	}
+/*
+    public class VTankControl
+    {
+        private const string VTANK_ERROR = "VTank Core not Found";
+        private bool isBuffingEnable = false;
+
+        public bool IsBuffingEnabled()
+        {   
+            try
+            {
+                var buffingSettingID = uTank2.Logic.UserSettings.SettingIDs.Buffing;
+                isBuffingEnable = (bool)uTank2.Logic.PluginCore.PC.GetOption(buffingSettingID);
+                return isBuffingEnable;
+            }
+            catch (Exception ex) {Util.WriteToChat($"Vtank isbuffenabled: {ex}");return false;}
+        }
+
+        public void ToggleBuffing()
+        {
+            try
+            {
+                if (uTank2.Logic.PluginCore.PC == null){Util.WriteToChat(VTANK_ERROR);}
+                var buffingSettingID = uTank2.Logic.UserSettings.SettingIDs.Buffing;
+                isBuffingEnable = (bool)uTank2.Logic.PluginCore.PC.GetOption(buffingSettingID);
+                uTank2.Logic.PluginCore.PC.SetOption(buffingSettingID, !isBuffingEnable);
+            }
+            catch (Exception ex) {Util.WriteToChat($"Vtank ToggleBuffing: {ex}");}
+        }
+        public void SetBuffing(bool enable)
+        {
+            try
+            {
+                if (uTank2.Logic.PluginCore.PC == null){Util.WriteToChat(VTANK_ERROR);}
+                var buffingSettingID = uTank2.Logic.UserSettings.SettingIDs.Buffing;
+                isBuffingEnable = (bool)uTank2.Logic.PluginCore.PC.GetOption(buffingSettingID);
+                if (isBuffingEnable != enable)
+                {
+                    uTank2.Logic.PluginCore.PC.SetOption(buffingSettingID, enable);
+                }
+            }
+            catch (Exception ex) {Util.WriteToChat($"Vtank SetBuffing: {ex}");}
+        }
+        public void StartForceBuff()
+        {
+            try
+            {
+                if (uTank2.Logic.PluginCore.PC == null){Util.WriteToChat(VTANK_ERROR);}
+                uTank2.Logic.PluginCore.PC.MicorInvoke("ForceBuff");
+            }
+            catch (Exception ex) {Util.WriteToChat($"Vtank StartForceBuff: {ex}");}
+        }
+        public void StopForceBuff()
+        {
+            try
+            {
+                if (uTank2.Logic.PluginCore.PC == null){Util.WriteToChat(VTANK_ERROR);}
+                uTank2.Logic.PluginCore.PC.MicorInvoke("ForceBuffCancel");
+            }
+            catch (Exception ex) {Util.WriteToChat($"Vtank StartForceBuff: {ex}");}
+        }
+    }
+*/
 }
 
 /*

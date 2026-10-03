@@ -33,16 +33,31 @@
   <ItemGroup>
     <Reference Include="Decal.Adapter">
       <HintPath>"/home/m3lkor/Games/AC/drive_c/Program Files/Decal 3.0/Decal.Adapter.dll"</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Decal.Interop.Core">
       <HintPath>"/home/m3lkor/Games/AC/drive_c/Program Files/Decal 3.0/.NET 4.0 PIA/Decal.Interop.Core.DLL"</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Xml" />
+    <Reference Include="utank2-i">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>"/home/m3lkor/Games/ac/drive_c/Games/VirindiPlugins/VirindiTank/utank2-i.dll"</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Drawing">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Xml">
+      <Private>False</Private>
+    </Reference>
     <Reference Include="VirindiViewService">
       <HintPath>/home/m3lkor/Games/AC/drive_c/Games/VirindiPlugins/VirindiViewService/VirindiViewService.dll</HintPath>
+      <Private>False</Private>
     </Reference>
+    
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Globals.cs" />
